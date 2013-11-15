@@ -103,9 +103,9 @@ local function jump(event)
 			su:play()
 		end
 	end	
-	if boomer.state == "fly" then
-		transition.to(boomer, {time=100, x=su.x+40, y=su.y+5, onComplete=stopBoomer } )
-	end
+	--if boomer.state == "fly" then
+	--	transition.to(boomer, {time=100, x=su.x+40, y=su.y+5, onComplete=stopBoomer } )
+	--end
 end
 
 
@@ -128,11 +128,18 @@ local function flyDirection()
 	v.y = boomer.y - su.y 
 end
 
+local function checkBoomerState()
+	if boomer.x < su.x then
+		print("su jump")
+	else
+		print("su move back")
+	end
+end
+
 local function flyBack()
 	--transition.to(boomer, {time=1000, x=su.x, y=su.y, onComplete=flyFast } )
 	boomer:setLinearVelocity(-200,0 )
-	flyDirection()
-	print(v.x)
+	timer.performWithDelay(1000, checkBoomerState)
 end
 
 
@@ -214,10 +221,13 @@ function su:collision(event)
 			su.forward = 0
 			su:setSequence("stand")
 			su:play()
-			su:setLinearVelocity(0,0)
-		elseif event.other.name == "boomer" then
+			su:setLinearVelocity(0,0)		
+		end
+	elseif ( event.phase == "ended" ) then		
+		if event.other.name == "boomer" then
 			if boomer.state == "fly" then
-				stopBoomer()
+				boomer:setLinearVelocity(0,0)
+				--stopBoomer()
 			end	
 		end
 	end
