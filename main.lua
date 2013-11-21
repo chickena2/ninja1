@@ -14,5 +14,5 @@ local ground1 = display.newImage("ground.png")
 ground1.y = 250
 physics.addBody(ground1,"static",{bounce=0})
 ground1.name = "ground1"
---require "su"
-require "test"
+require "su"
+--require "test"

@@ -1,5 +1,7 @@
 local t = {}
 
+local RUN_SPEED = 100
+
 local options =
 {
 	frames =
@@ -20,126 +22,40 @@ local imageSheet = graphics.newImageSheet("su_spriteSheet.png", options)
 
 local sequenceData =
 {
-   	{ name="stop", frames={1}, time=500},
+   	{ name="stand", frames={1}, time=500},
    	{ name="walk", frames={2,3,4,5}, time=1000, loopCount=0 }, 
    	{ name="jump", frames={6}, time=500},
    	{ name="throw", frames={7,8,9,1}, time=500, loopCount=1 }, 
    	
 }	
 
-local sprite = display.newSprite(imageSheet, sequenceData)
+local su = display.newSprite(imageSheet, sequenceData)
+su.x = 100
+su.y = 200
+su.xScale = -1
+su.state = "onGround"
+su.forward = 0
+physics.addBody(su,{bounce=0})
+su.isFixedRotation = true
 
--- Local Attribute --
+local b = require "boomer"
+local boomer = b.getSprite()
+--boomer:scale(0.5,0.5)
+physics.addBody(boomer,"kinematic")
+boomer.isSensor = true
+boomer.name = "boomer"
 
-local speed = 100
-local boomer = require "boomerang"															-- su has a boomerang --
-local hasBoomer = true
-local onGround  = true
-local ground = 203
-
--- Public attribute --
-
-
--- Initial condition --
-physics.addBody(sprite, {bounce = 0})
-sprite.x = 240
-sprite.y = 200
-sprite.name = "su"
-sprite.xScale = -1
-sprite.isFixedRotation = true
-
-function sprite:collision(event)
-	if event.phase == "began" then
-		if event.other.name == "boomer" then
-			sprite:removeEventListener( "collision", sprite)
-			Runtime:removeEventListener( "enterFrame", isBack)
-			boomer.stop()																	-- catch the boomerang --												
-			hasBoomer = true
-		end
-	end
+local function stopBoomer()
+	boomer.state = "stop"
+	boomer.x = su.x+40
+	boomer.y = su.y+5
+	boomer:setLinearVelocity(0,0)
+	boomer:setSequence("stop")
+	boomer:play()
+	--boomer.isVisible = false
 end
 
--- every frame check if the boomerang is back
-local function isBack()
-	if boomer.state == "closer" then														-- check if the boomerang is coming back --
-		sprite:addEventListener( "collision", sprite)
-		if boomer.getX() < sprite.x+20 then 
-			
-		end
-	end
-end
-
-local function throw(event)	
-	if hasBoomer == true then
-	  	if event.phase == "began" then	  	  			
-	  		boomer.move()	  																	-- throw the boomerang	  	
-	  		Runtime:addEventListener( "enterFrame", isBack) 									-- every frame check if the boomerang is back --
-	  		hasBoomer = false
-	  	end
-	end
-end
-
--- listen for touch event
-Runtime:addEventListener( "touch", throw)
-
-local function stop(event)
-	if event.phase == "began" then
-		boomer.stop()
-	end
-end
-
-local function isLanded()														
-	if sprite.y > ground then 
-		Runtime:removeEventListener( "enterFrame", isLanded)
-		sprite:setSequence("stop")
-		sprite:play()																									
-		onGround = true
-	end
-end
-
-local function jump(event)
-	if onGround == true then
-		if event.phase == "began" then
-			onGround = false
-			Runtime:addEventListener( "enterFrame", isLanded)
-			sprite:setLinearVelocity(0,-200)
-			sprite:setSequence("jump")
-			sprite:play()
-		end
-	end	
-end
-
-local widget 	= require "widget"
-
-local jumpButton = widget.newButton
-{
-   left = 100,
-   top = 280,
-   width = 40,                        --width of the image file(s)
-   height = 20,                       --height of the image file(s)
-   defaultFile = "bt_default.png",  --the "default" image file
-   overFile = "bt_over.png",        --the "over" image file
-   label = "J",
-   onEvent = jump,
-}
-
---[[
-local stopButton = widget.newButton
-{
-   left = 100,
-   top = 280,
-   width = 40,                        --width of the image file(s)
-   height = 20,                       --height of the image file(s)
-   defaultFile = "bt_default.png",  --the "default" image file
-   overFile = "bt_over.png",        --the "over" image file
-   label = "S",
-   onEvent = stop,
-}
-]]--
-
-
-
---[[
+widget = require "widget"
 
 local function moveRight(event)
 	if su.state == "onGround" then
@@ -178,6 +94,20 @@ local function moveLeft(event)
 	end
 end
 
+local function jump(event)
+	if su.state == "onGround" then
+		if event.phase == "began" then
+			su.state = "offGround"
+			su:setLinearVelocity(0,-200)
+			su:setSequence("jump")
+			su:play()
+		end
+	end	
+	--if boomer.state == "fly" then
+	--	transition.to(boomer, {time=100, x=su.x+40, y=su.y+5, onComplete=stopBoomer } )
+	--end
+end
+
 
 
 
@@ -208,6 +138,7 @@ end
 
 local function flyBack()
 	--transition.to(boomer, {time=1000, x=su.x, y=su.y, onComplete=flyFast } )
+	boomer.state = "flyBackWard"
 	boomer:setLinearVelocity(-200,0 )
 	timer.performWithDelay(1000, checkBoomerState)
 end
@@ -218,7 +149,7 @@ local function flyBoomer()
 	boomer:setLinearVelocity(200,0)
 	boomer:setSequence("fly")
 	boomer:play()
-	boomer.state = "fly"
+	boomer.state = "flyForward"
 	timer.performWithDelay(1000, flyBack)
 end
 
@@ -258,7 +189,17 @@ local leftButton = widget.newButton
    onEvent = moveLeft,
 }
 
-
+local jumpButton = widget.newButton
+{
+   left = 100,
+   top = 280,
+   width = 40,                        --width of the image file(s)
+   height = 20,                       --height of the image file(s)
+   defaultFile = "bt_default.png",  --the "default" image file
+   overFile = "bt_over.png",        --the "over" image file
+   label = "J",
+   onEvent = jump,
+}
 
 local throwButton = widget.newButton
 {
@@ -293,9 +234,9 @@ function su:collision(event)
 	end
 end
 
+su:addEventListener( "collision", character)
 
-]]--
-return t
+
 
 
 

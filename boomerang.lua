@@ -21,44 +21,75 @@ local sequenceData =
 
 local sprite = display.newSprite(imageSheet, sequenceData)
 
--- local attribute of the sprite 
-local time			= 0				-- time counter --
-local initial_pos 	= 240			-- starting position --
-local range 		= 200			-- how far it would go --
-local speed 		= 0.7			-- how fast the sprite moving --
+-- Local attribute of the sprite --
+
+local time				= 0				-- time counter --
+local initial_pos 		= 240			-- starting position --
+local range 			= 200			-- how far it would go --
+local speed 			= 0.085			-- how fast the sprite moving --
+local range_decrease 	= 0.85
 
 -- initial condition of boomerang, execute with the require statement
 -- those are public attribute that can get be changed outside the model
 physics.addBody(sprite,"kinematic")
-sprite.x = 200
+sprite.x = 240
 sprite.y = 200
 sprite.name = "boomer"
-sprite.state = "stop" 
+sprite.isSensor = true
+sprite.isVisible = false
+
+-- Public attribute --
+t.state = "stop" 
 
 	-- LOCAL FUNCTION  --
+	
+-- change state of the sprite according to position
+local function changeState()
+	-- check if the boomerang at max right, max left, or in the middle 
+	if (sprite.x > range + initial_pos - 1) or (sprite.x < -range + initial_pos + 1) then		
+		t.state = "closer"
+	elseif initial_pos - 15 < sprite.x and sprite.x < initial_pos + 15 then
+	if sprite.x < initial_pos then
+			range = range * range_decrease
+		end
+		t.state ="further"
+	end
+end
+
+-- moving equation of the sprite, call every frame --
 local function moveEquation()
 	time = time + speed 
-	sprite.x = range*math.sin(t) + initial_pos
+	sprite.x = range*math.sin(time) + initial_pos
+	changeState()
 end	
 
 	-- PUBLIC FUNCTION --
 
--- return the reference to the sprite --
-function t.getSprite()
-	return sprite
-end
-
 -- moving the sprite --
-function t.moveSprite()
+function t.move()
+	sprite.isVisible = true
 	sprite:setSequence("move")
 	sprite:play()	
 	Runtime:addEventListener( "enterFrame", moveEquation)
 end
 
-function t.stopSprite()
+function t.stop()
+	sprite.isVisible = false
 	sprite:setSequence("stop")
 	sprite:play()
 	Runtime:removeEventListener( "enterFrame", moveEquation)
+	t.state = "stop"
+	time = 0
+	range = 200
+end
+
+function t.getX()
+	return sprite.x
+end
+
+-- return the reference to the sprite --
+function t.getSprite()
+	return sprite
 end
 
 return t
