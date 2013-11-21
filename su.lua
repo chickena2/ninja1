@@ -71,7 +71,8 @@ end
 
 local function throw(event)	
 	if hasBoomer == true then
-	  	if event.phase == "began" then	  	  			
+	  	if event.phase == "began" then	
+	  		boomer.setMoveEquationConst(sprite)  	  			
 	  		boomer.move()	  																	-- throw the boomerang	  	
 	  		Runtime:addEventListener( "enterFrame", isBack) 									-- every frame check if the boomerang is back --
 	  		hasBoomer = false
@@ -88,7 +89,8 @@ local function stop(event)
 	end
 end
 
-local function isLanded()														
+local function isLanded()	
+	print(sprite.y)													
 	if sprite.y > ground then 
 		Runtime:removeEventListener( "enterFrame", isLanded)
 		sprite:setSequence("stop")
@@ -97,6 +99,7 @@ local function isLanded()
 	end
 end
 
+-- jump action --
 local function jump(event)
 	if onGround == true then
 		if event.phase == "began" then

@@ -24,7 +24,7 @@ local sprite = display.newSprite(imageSheet, sequenceData)
 -- Local attribute of the sprite --
 
 local time				= 0				-- time counter --
-local initial_pos 		= 240			-- starting position --
+local initial_x 		= 240			-- starting position --
 local range 			= 200			-- how far it would go --
 local speed 			= 0.085			-- how fast the sprite moving --
 local range_decrease 	= 0.85
@@ -46,10 +46,10 @@ t.state = "stop"
 -- change state of the sprite according to position
 local function changeState()
 	-- check if the boomerang at max right, max left, or in the middle 
-	if (sprite.x > range + initial_pos - 1) or (sprite.x < -range + initial_pos + 1) then		
+	if (sprite.x > range + initial_x - 1) or (sprite.x < -range + initial_x + 1) then		
 		t.state = "closer"
-	elseif initial_pos - 15 < sprite.x and sprite.x < initial_pos + 15 then
-	if sprite.x < initial_pos then
+	elseif initial_x - 15 < sprite.x and sprite.x < initial_x + 15 then
+	if sprite.x < initial_x then
 			range = range * range_decrease
 		end
 		t.state ="further"
@@ -59,7 +59,7 @@ end
 -- moving equation of the sprite, call every frame --
 local function moveEquation()
 	time = time + speed 
-	sprite.x = range*math.sin(time) + initial_pos
+	sprite.x = range*math.sin(time) + initial_x
 	changeState()
 end	
 
@@ -73,6 +73,7 @@ function t.move()
 	Runtime:addEventListener( "enterFrame", moveEquation)
 end
 
+-- stop the sprite --
 function t.stop()
 	sprite.isVisible = false
 	sprite:setSequence("stop")
@@ -83,6 +84,7 @@ function t.stop()
 	range = 200
 end
 
+-- get the x postion fo the sprite --
 function t.getX()
 	return sprite.x
 end
@@ -90,6 +92,12 @@ end
 -- return the reference to the sprite --
 function t.getSprite()
 	return sprite
+end
+
+-- change starting point of the sprite --
+function t.setMoveEquationConst(s)
+	--initial_x = s.x
+	sprite.y = s.y
 end
 
 return t
